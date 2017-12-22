@@ -375,18 +375,18 @@ define([
 			}
 		});
 
-		editors.Number = Backbone.Form.Number.extend({
+		editors.Number = editors.Base.extend({
 
 			defaultValue: '',
 
-			events: _.extend({}, editors.Number.prototype.events, {
+			events: _.extend({}, editors.Base.prototype.events, {
 			//'keypress': 'onKeyPress',
 			//'change': 'onKeyPress',
 			'keyup': 'onKeyUp'
 			}),
 
 			initialize: function(options) {
-				Backbone.Form.Number.prototype.initialize.call(this, options);
+				editors.Base.prototype.initialize.call(this, options);
 
 				var schema = this.schema;
 
@@ -447,7 +447,7 @@ define([
 
 				if (_.isNaN(value)) value = null;
 
-				Backbone.Form.Number.prototype.setValue.call(this, value);
+				editors.Base.prototype.setValue.call(this, value);
 			}
 
 		});
