@@ -122,7 +122,7 @@ class DynamicObjectValue(CustomView):
 
 class DynamicObjectValues(CustomView):
     def retrieve(self):
-        from ..Models import thesaurusDictTraduction
+        from ..utils.parseValue import formatThesaurus
 
         propertiesTable = Base.metadata.tables[self.parent.objectDB.GetDynPropTable()]
         dynamicValuesTable = Base.metadata.tables[self.parent.objectDB.GetDynPropValuesTable()]
@@ -133,22 +133,22 @@ class DynamicObjectValues(CustomView):
                          dynamicValuesTable.c[FK_property_name] == propertiesTable.c['ID'])
         query = select([dynamicValuesTable, propertiesTable.c['Name']]
                        ).select_from(tableJoin).where(
-            dynamicValuesTable.c[FK_name] == self.parent.objectDB.ID
-        ).order_by(desc(dynamicValuesTable.c['StartDate']))
+                dynamicValuesTable.c[FK_name] == self.parent.objectDB.ID
+            ).order_by(desc(dynamicValuesTable.c['StartDate']))
 
         result = self.session.execute(query).fetchall()
         response = []
 
-        userLng = self.request.authenticated_userid['userlanguage']
         for row in result:
             curRow = OrderedDict(row)
             dictRow = {}
             for key in curRow:
                 if curRow[key] is not None:
-                    if 'Value' in key:
-                        if curRow[key] in thesaurusDictTraduction:
-                            dictRow['value'] = thesaurusDictTraduction[curRow[key]][userLng]
-                        else:
+                    if key == 'ValueString' in key and curRow[key] is not None:
+                        try:
+                            thesauralValueObj = formatThesaurus(curRow[key])
+                            dictRow['value'] = thesauralValueObj['displayValue']
+                        except:
                             dictRow['value'] = curRow[key]
                     elif 'FK' not in key:
                         dictRow[key] = curRow[key]
@@ -218,6 +218,42 @@ class DynamicObjectView(CustomView):
         self.objectDB.afterDelete()
         return 'deleted'
 
+    def history(self):
+        from ..utils.parseValue import formatThesaurus
+
+        propertiesTable = Base.metadata.tables[self.objectDB.GetDynPropTable()]
+        dynamicValuesTable = Base.metadata.tables[self.objectDB.GetDynPropValuesTable()]
+        FK_name = self.objectDB.GetSelfFKNameInValueTable()
+        FK_property_name = self.objectDB.GetDynPropFKName()
+
+        tableJoin = join(dynamicValuesTable, propertiesTable,
+                         dynamicValuesTable.c[FK_property_name] == propertiesTable.c['ID'])
+        query = select([dynamicValuesTable, propertiesTable.c['Name']]
+                       ).select_from(tableJoin).where(
+                dynamicValuesTable.c[FK_name] == self.objectDB.ID
+            ).order_by(desc(dynamicValuesTable.c['StartDate']))
+
+        result = self.session.execute(query).fetchall()
+        response = []
+
+        for row in result:
+            curRow = OrderedDict(row)
+            dictRow = {}
+            for key in curRow:
+                if curRow[key] is not None:
+                    if key == 'ValueString' in key and curRow[key] is not None:
+                        try:
+                            thesauralValueObj = formatThesaurus(curRow[key])
+                            dictRow['value'] = thesauralValueObj['displayValue']
+                        except:
+                            dictRow['value'] = curRow[key]
+                    elif 'FK' not in key:
+                        dictRow[key] = curRow[key]
+            dictRow['StartDate'] = curRow[
+                'StartDate'].strftime('%Y-%m-%d %H:%M:%S')
+            response.append(dictRow)
+
+        return response
 
 
 class DynamicObjectCollectionView(CustomView):

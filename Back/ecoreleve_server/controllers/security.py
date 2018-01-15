@@ -148,9 +148,9 @@ context_permissions = {
     ],
 
     'individuals': [
-        (Allow, 'group:admins', ALL_PERMISSIONS),
-        (Allow, 'group:superUsers', ('update', 'read')),
-        (Allow, 'group:users', 'read')
+        (Allow, 'group:admin', ALL_PERMISSIONS),
+        (Allow, 'group:superUser', ('update', 'read')),
+        (Allow, 'group:user', 'read')
     ],
 
     'monitoredSites': [
